@@ -1,4 +1,4 @@
-/* Macred code: for the Sparkfun Pro Micro with VL6180x-TOF050C, SSD1306 and mechanical switches
+/* Macred code: for the Sparkfun Pro Micro with VL6180x-TOF050C, SSD1306, BMP280 and mechanical switches
   by: Bram Diepenbrock
 */
 
@@ -7,11 +7,8 @@
 #include <TimerOne.h>
 #include <Adafruit_GFX.h>
 #include <Fonts/Picopixel.h>
-// #include <Fonts/FreeMonoBoldOblique12pt7b.h>
-// #include <Fonts/FreeSerif9pt7b.h>
-// #include <Fonts/FreeMonoBold9pt7b.h>
 
-#include "Adafruit_VL6180X.h"
+// #include "Adafruit_VL6180X.h"
 #include "BMP280.h"
 #include <Keyboard.h>
 
@@ -19,10 +16,10 @@
 #define SSD1306_NO_SPLASH  // Saves ~1KB
 #include <Adafruit_SSD1306.h>
 
+
 // Global variables
 bool displayUpdate0 = true;  // decides if the display needs an update on a region
-//bool displayUpdate1 = 1; // decides of the display needs an update on a region
-//                1, 2, 3,  4,  5,  6, 7, 8, 9
+//                1, 2,  3,  4,  5,  6, 7, 8, 9        KeyPins is an array. The function getKeyStatus adds + 1. For example: pin 16 is pressed, 4th place in the array, 5th case in the profile.
 int keyPins[9] = { 4, 5, 10, 16, 14, 6, 7, 8, 9 };  // GPIO pins reserved for the keyboard
 int keyStatus;                                      // Used to monitor which buttons are pressed
 int profile;                                        // keyboard profile variable to switch keyboard binds
@@ -56,7 +53,7 @@ uint8_t player_y = 16;
 
 // Devices
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire, 4);
-Adafruit_VL6180X vl = Adafruit_VL6180X();
+// Adafruit_VL6180X vl = Adafruit_VL6180X();
 BMP280 bmp280;
 
 // the setup function runs once when you press reset or power the board
@@ -74,12 +71,12 @@ void setup() {
   }
 
   //Init distance sensor
-  Serial.println("Adafruit VL6180x test!");
-  if (!vl.begin()) {
-    // Serial.println("Failed to find sensor");
-    while (1)
-      ;
-  }
+  // Serial.println("Adafruit VL6180x test!");
+  // if (!vl.begin()) {
+  //   // Serial.println("Failed to find sensor");
+  //   while (1)
+  //     ;
+  // }
   // Serial.println("Distance sensor VL6180x found!");
 
   //Init BMP280 temperature and pressure sensor
@@ -260,19 +257,19 @@ void loop() {
   // Normal macro keyboard loop
   else {
     // Read the TOF distance sensor without blocking code
-    if (millis() - distLastReadTime >= distReadInterval) {
-      distLastReadTime = millis();
-      uint8_t range = vl.startRange();
-      if (vl.readRangeStatus() == 0) {  // Check if reading is valid, 0 means valid reading. This is because the senor is placed wrong in the housing.
-        Serial.print("readRangeResult: ");
-        range = vl.readRangeResult();
-        Serial.println(range);
-        if (range <= 40) {
-          // Object is detected closeby, display message
-          displayMovement();
-        }
-      }
-    }
+    // if (millis() - distLastReadTime >= distReadInterval) {
+    //   distLastReadTime = millis();
+    //   uint8_t range = vl.startRange();
+    //   if (vl.readRangeStatus() == 0) {  // Check if reading is valid, 0 means valid reading. This is because the senor is placed wrong in the housing.
+    //     Serial.print("readRangeResult: ");
+    //     range = vl.readRangeResult();
+    //     Serial.println(range);
+    //     if (range <= 40) {
+    //       // Object is detected closeby, display message
+    //       displayMovement();
+    //     }
+    //   }
+    // }
     if (millis() - tempLastReadTime >= tempReadInterval) {  // Check if 5 minutes have been passed
       tempLastReadTime = millis();
       bmp280.setCtrlMeasMode(BMP280::eCtrlMeasModeForced);
@@ -312,7 +309,10 @@ void loop() {
    This function will only send a key press if a single button
    is being pressed */
 void sendKeyPressProfile0(int key) {
-  // Serial.println("Going to send key press over usb");
+
+  // Refer to line 22 and 23 to see which pin I mapped to a case
+  Serial.println(key);
+
   switch (key) {
     case 1:
       Keyboard.press(KEY_LEFT_CTRL);
@@ -371,7 +371,10 @@ void sendKeyPressProfile0(int key) {
    This function will only send a key press if a single button
    is being pressed */
 void sendKeyPressProfile1(int key) {
-  // Serial.println("Going to send key press over usb");
+
+  // Refer to line 22 and 23 to see which pin I mapped to a case
+  // Serial.println(key);
+
   switch (key) {
     case 1:
       Keyboard.write('3');
@@ -417,8 +420,10 @@ void sendKeyPressProfile1(int key) {
     status of all the keys on the Macred. It also switches the profile int.
 */
 int getKeyStatus() {
+  // Refer to line 22 and 23 to see which pin I mapped to a case
+
   // if statement to switch profiles or start a game
-  if (!digitalRead(keyPins[4]) && !digitalRead(keyPins[8])) {
+  if (!digitalRead(keyPins[4]) && !digitalRead(keyPins[8])) {   // case 5 and 9
     profile ^= 1;  // expression that toggles the value profile between 0 and 1
     // profile = (profile + 1) % 3; // modulo for 3 profiles
     // Serial.print("Switched to profile ");
@@ -427,7 +432,7 @@ int getKeyStatus() {
     return;                         // return nothing to prevent 2 actions happening at the same time
   }
   // if statement to switch to tetris or some other game that fits in the memory
-  if (!digitalRead(keyPins[3]) && !digitalRead(keyPins[7])) {
+  if (!digitalRead(keyPins[3]) && !digitalRead(keyPins[7])) {   // case 4 and 8
     Serial.println("Tetris time!");
     // Start or stop Tetris
     gameMode = !gameMode;
@@ -435,7 +440,7 @@ int getKeyStatus() {
   // if statement to display the bmp280 sensor values, temperature and pressure
   if (!digitalRead(keyPins[1]) && !digitalRead(keyPins[6])) {
     Serial.println("Display temperature and pressure");
-    displayMovement();
+    displayTempPres();
     delay(1000);
   }
 
@@ -455,14 +460,20 @@ int getKeyStatus() {
 }
 
 
-/* displayMovement(): display a message an user was detected by the TOF sensor.
+/* displayTempPres(): display the current temperature and pressure
 */
-void displayMovement() {
+void displayTempPres() {
   display.clearDisplay();
   display.setTextSize(2);
   // display.setFont(&FreeSerif9pt7b);
   display.setCursor(0, 0);
+  display.println("Temp:");
+  display.setCursor(0, 20);
   display.println(bmp280.getTemperature());
+  display.setCursor(0, 40);
+  display.println("Pres:");
+  display.setCursor(0, 60);
+  display.println(bmp280.getPressure());
   display.display();
 }
 
