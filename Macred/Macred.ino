@@ -1,5 +1,8 @@
 /* Macred code: for the Sparkfun Pro Micro with VL6180x-TOF050C, SSD1306, BMP280 and mechanical switches
   by: Bram Diepenbrock
+
+  The Pong game is based on: https://github.com/shveytank/Arduino_Pong_Game/tree/master from shveytank. I added a game counter, a condition when the game is over and a decreasing paddle size depending on the score.
+  TODO: I want to implement a TOF sensor that turns on the screen (and LED's) when a hand is close. Currently the fysical placement is far from optimal.
 */
 
 #include <Wire.h>
@@ -429,7 +432,6 @@ int getKeyStatus() {
     // Serial.print("Switched to profile ");
     // Serial.println(profile);
     displayProfileSwitch(profile);  // display to which profile is being switched
-    return;                         // return nothing to prevent 2 actions happening at the same time
   }
   // if statement to switch to tetris or some other game that fits in the memory
   if (!digitalRead(keyPins[3]) && !digitalRead(keyPins[7])) {   // case 4 and 8
@@ -438,7 +440,7 @@ int getKeyStatus() {
     gameMode = !gameMode;
   }
   // if statement to display the bmp280 sensor values, temperature and pressure
-  if (!digitalRead(keyPins[1]) && !digitalRead(keyPins[6])) {
+  if (!digitalRead(keyPins[2]) && !digitalRead(keyPins[6])) {
     Serial.println("Display temperature and pressure");
     displayTempPres();
     delay(1000);
@@ -465,7 +467,6 @@ int getKeyStatus() {
 void displayTempPres() {
   display.clearDisplay();
   display.setTextSize(2);
-  // display.setFont(&FreeSerif9pt7b);
   display.setCursor(0, 0);
   display.println("Temp:");
   display.setCursor(0, 20);
@@ -491,7 +492,6 @@ void displayKeyPress(String key) {
     display.println("Key");
     display.setCursor(0, 10);
     display.println("Press");
-    // display.setFont(&FreeSerif9pt7b);
     display.setCursor(0, 40);
     display.println(key);
     display.setFont();
@@ -510,7 +510,6 @@ void displayProfileSwitch(int profile) {
   display.setFont(&Picopixel);
   display.println("Profile");
   display.setCursor(50, 35);
-  // display.setFont(&FreeSerif9pt7b);
   display.println(profile);
   display.display();
 
@@ -519,6 +518,7 @@ void displayProfileSwitch(int profile) {
 
 
 /* displayKeyOverview():
+  TODO: I want to create a display with all the keybinds in the current profile.
 */
 void displayKeyOverview(int profile) {
   display.display();
